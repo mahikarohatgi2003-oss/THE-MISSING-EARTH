@@ -1,0 +1,11 @@
+{
+  "place_name": "Sohna, Gurugram District, Haryana, India (demo data)",
+  "buildings_mapped": 140,
+  "buildings_missing": 55,
+  "buildings_total_detected": 195,
+  "coverage_pct": 71.8,
+  "estimated_volunteer_hours": 1.4,
+  "estimated_mapathon_sessions": 1,
+  "estimated_mappers_for_one_weekend": 1,
+  "buildings_per_mapper_hour_assumed": 40
+}

@@ -1,0 +1,15 @@
+# Core pipeline (fast path — steps 1, 2, 3, 4, 5)
+osmnx>=1.9
+geopandas>=0.14
+shapely>=2.0
+requests>=2.31
+pandas>=2.0
+numpy>=1.26
+mercantile>=1.2
+
+# Optional: only needed for pipeline/2b_run_segmentation.py (real Sentinel-2 + SAM)
+# segment-geospatial
+# planetary-computer
+# pystac-client
+# rioxarray
+# rasterio

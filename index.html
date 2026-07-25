@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Missing Earth — OSM Coverage Survey</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============ MASTHEAD ============ -->
+  <header class="masthead">
+    <div class="masthead__title">
+      <h1>THE <span class="accent-green">MISSING</span> EARTH</h1>
+      <p class="masthead__tagline">Mapping the world's unmapped places using AI &amp; OpenStreetMap</p>
+    </div>
+    <ol class="workflow-strip">
+      <li><span class="workflow-icon">&#128752;</span>Satellite Imagery</li>
+      <li class="workflow-arrow">&rarr;</li>
+      <li><span class="workflow-icon">&#129504;</span>AI Detection</li>
+      <li class="workflow-arrow">&rarr;</li>
+      <li><span class="workflow-icon">&#128506;</span>OSM Comparison</li>
+      <li class="workflow-arrow">&rarr;</li>
+      <li><span class="workflow-icon">&#127919;</span>Priority Mapping</li>
+      <li class="workflow-arrow">&rarr;</li>
+      <li><span class="workflow-icon">&#129309;</span>Community Impact</li>
+    </ol>
+  </header>
+
+  <!-- ============ DASHBOARD GRID ============ -->
+  <main class="dashboard">
+
+    <!-- Panel 1 — the study area -->
+    <section class="panel panel--area">
+      <div class="panel__label"><span class="panel__num">1</span>THE STUDY AREA</div>
+      <div class="area-scan" id="area-scan" aria-hidden="true"></div>
+      <div class="area-info">
+        <div class="area-info__place" id="panel-place-name">Locating study area…</div>
+        <div class="area-info__row"><span>Source imagery</span><span>Sentinel-2 / Bing (via free AI footprint sets)</span></div>
+        <div class="area-info__row"><span>Detection model</span><span id="panel-model-name">Microsoft Global ML Building Footprints</span></div>
+        <div class="area-info__row"><span>Buildings analyzed</span><span id="panel-total-detected">—</span></div>
+      </div>
+    </section>
+
+    <!-- Panel 2 — AI detection categories -->
+    <section class="panel panel--detection">
+      <div class="panel__label"><span class="panel__num">2</span>AI DETECTION — WHAT THE MODEL FINDS</div>
+      <div class="detection-grid">
+        <div class="detection-card detection-card--active">
+          <div class="detection-card__icon">&#127968;</div>
+          <div class="detection-card__title">Missing buildings</div>
+          <div class="detection-card__value" id="panel-missing-count">—</div>
+          <div class="detection-card__status">Live in this survey</div>
+        </div>
+        <div class="detection-card">
+          <div class="detection-card__icon">&#128739;</div>
+          <div class="detection-card__title">Missing roads</div>
+          <div class="detection-card__value">—</div>
+          <div class="detection-card__status">Roadmap</div>
+        </div>
+        <div class="detection-card">
+          <div class="detection-card__icon">&#128167;</div>
+          <div class="detection-card__title">Missing waterways</div>
+          <div class="detection-card__value">—</div>
+          <div class="detection-card__status">Roadmap</div>
+        </div>
+        <div class="detection-card">
+          <div class="detection-card__icon">&#127807;</div>
+          <div class="detection-card__title">Land use gaps</div>
+          <div class="detection-card__value">—</div>
+          <div class="detection-card__status">Roadmap</div>
+        </div>
+      </div>
+      <div class="detection-footnote">This survey's v1 scope is buildings only, using free pre-computed AI footprints — see README for the roadmap on roads/waterways/land-use.</div>
+    </section>
+
+    <!-- Panel 3 — OSM comparison & insights -->
+    <section class="panel panel--insights">
+      <div class="panel__label"><span class="panel__num">3</span>OSM COMPARISON &amp; INSIGHTS</div>
+      <div class="insights-body">
+        <div class="donut-block">
+          <svg viewBox="0 0 120 120" class="donut" aria-hidden="true">
+            <circle cx="60" cy="60" r="52" class="donut__track" />
+            <circle cx="60" cy="60" r="52" class="donut__fill" id="donut-fill" />
+          </svg>
+          <div class="donut-label">
+            <div class="donut-label__pct" id="donut-pct">—%</div>
+            <div class="donut-label__caption">mapped</div>
+          </div>
+        </div>
+        <div class="stat-table">
+          <div class="stat-table__row"><span>Buildings mapped</span><strong id="stat-mapped">—</strong></div>
+          <div class="stat-table__row"><span>Buildings missing</span><strong class="flag" id="stat-missing">—</strong></div>
+          <div class="stat-table__row"><span>Volunteer-hours needed</span><strong id="stat-hours">—</strong></div>
+          <div class="stat-table__row"><span>Mappers, one weekend</span><strong id="stat-mappers">—</strong></div>
+        </div>
+      </div>
+      <div class="mini-heatmap-block">
+        <div class="mini-heatmap-title">COVERAGE HEATMAP</div>
+        <canvas id="mini-heatmap" width="300" height="150"></canvas>
+        <div class="mini-heatmap-scale"><span>0%</span><span>gap density</span><span>100%</span></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ LIVE MAP ============ -->
+  <section class="live-map-section">
+    <div class="live-map-header">
+      <div class="panel__label"><span class="panel__num">&#9679;</span>LIVE INTERACTIVE SURVEY MAP</div>
+      <div class="legend">
+        <label class="legend__item">
+          <input type="checkbox" id="toggle-mapped" checked />
+          <span class="legend__swatch legend__swatch--mapped"></span> Already mapped
+        </label>
+        <label class="legend__item">
+          <input type="checkbox" id="toggle-missing" checked />
+          <span class="legend__swatch legend__swatch--missing"></span> Likely missing
+        </label>
+        <label class="legend__item">
+          <input type="checkbox" id="toggle-heatmap" checked />
+          <span class="legend__swatch legend__swatch--heat"></span> Priority heatmap
+        </label>
+      </div>
+    </div>
+    <div id="map"></div>
+  </section>
+
+  <!-- ============ SUGGESTED NEXT EDITS ============ -->
+  <section class="panel panel--priority">
+    <div class="panel__label"><span class="panel__num">4</span>SUGGESTED NEXT EDITS — HIGHEST-PRIORITY CELLS</div>
+    <div class="priority-list" id="priority-list">
+      <div class="priority-list__empty">Run the pipeline to populate priority zones.</div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="site-footer">
+    <div class="methodology-flow">
+      <span>OSM Overpass</span><span class="mf-arrow">&rarr;</span>
+      <span>AI Footprints</span><span class="mf-arrow">&rarr;</span>
+      <span>Spatial Diff</span><span class="mf-arrow">&rarr;</span>
+      <span>Heatmap</span><span class="mf-arrow">&rarr;</span>
+      <span>Volunteer Estimate</span>
+    </div>
+    <div class="tech-stack">
+      <span>Python</span><span class="dot">&middot;</span>
+      <span>GeoPandas + OSMnx</span><span class="dot">&middot;</span>
+      <span>Microsoft Planetary Computer</span><span class="dot">&middot;</span>
+      <span>Leaflet.js</span><span class="dot">&middot;</span>
+      <span>GitHub Pages</span>
+    </div>
+    <div class="footer-links">
+      Data: OpenStreetMap contributors (ODbL) &middot; AI footprints via Microsoft Global ML Building Footprints &middot;
+      <a href="https://github.com/" target="_blank" rel="noopener">view pipeline on GitHub</a>
+    </div>
+  </footer>
+
+  <div class="empty-state" id="empty-state" hidden>
+    <p><strong>No survey data yet.</strong></p>
+    <p>Run the pipeline (<code>python pipeline/run_all.py</code>) to generate
+    <code>docs/data/*.geojson</code>, then reload this page.</p>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
